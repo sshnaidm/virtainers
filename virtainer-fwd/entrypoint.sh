@@ -30,10 +30,14 @@ EOF
   genisoimage -output /cloud_init.iso -volid cidata -joliet -rock /tmp/user-data /tmp/meta-data
 fi
 
+if [[ -e /image.xz ]]; then
+  unxz /image.xz
+fi
+
 IMAGE_DIR=${IMAGE_DIR:-/mounted}
 mkdir -p $IMAGE_DIR
 if [[ ! -e ${IMAGE_DIR}/local_image.qcow2 ]]; then
-  qemu-img create -f qcow2 -o backing_file=/image ${IMAGE_DIR}/local_image.qcow2
+  qemu-img create -f qcow2 -o backing_file=/image ${IMAGE_DIR}/local_image.qcow2 ${DISK_SIZE:-40G}
 fi
 old=$(virsh net-dumpxml default | grep range|sed "s/^ *//g")
 virsh net-update default delete ip-dhcp-range "$old" --live
