@@ -13,5 +13,5 @@ docker run \
     --privileged \
     -v /tmp/temp-user-data:/tmp/user-data \
     --name centos7 \
-    -d -t docker.io/sshnaidm/virtainers:centos7
+    -d -t docker.io/virtainers/centos:7
 docker inspect centos7 -f "{{ .NetworkSettings.IPAddress }}"

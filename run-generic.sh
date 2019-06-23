@@ -19,5 +19,5 @@ docker run \
     -v $(realpath $IMAGE):/image \
     -v /tmp/temp-user-data:/tmp/user-data \
     --name virtainer \
-    -d -t docker.io/sshnaidm/virtainers:latest
+    -d -t docker.io/virtainers/generic
 docker inspect virtainer -f "{{ .NetworkSettings.IPAddress }}"

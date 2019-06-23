@@ -13,5 +13,5 @@ docker run \
     --privileged \
     -v /tmp/temp-user-data:/tmp/user-data \
     --name fedora29 \
-    -d -t docker.io/sshnaidm/virtainers:fedora29
+    -d -t docker.io/virtainers/fedora:29
 docker inspect fedora29 -f "{{ .NetworkSettings.IPAddress }}"

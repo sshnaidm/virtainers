@@ -13,5 +13,5 @@ docker run \
     --privileged \
     -v /tmp/temp-user-data:/tmp/user-data \
     --name ubuntu18.04 \
-    -d -t docker.io/sshnaidm/virtainers:ubuntu18.04
+    -d -t docker.io/virtainers/ubuntu:18.04
 docker inspect ubuntu18.04 -f "{{ .NetworkSettings.IPAddress }}"
