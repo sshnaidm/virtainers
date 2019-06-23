@@ -30,7 +30,11 @@ EOF
   genisoimage -output /cloud_init.iso -volid cidata -joliet -rock /tmp/user-data /tmp/meta-data
 fi
 
-qemu-img create -f qcow2 -o backing_file=/image /local_image.qcow2
+IMAGE_DIR=${IMAGE_DIR:-/mounted}
+mkdir -p $IMAGE_DIR
+if [[ ! -e ${IMAGE_DIR}/local_image.qcow2 ]]; then
+  qemu-img create -f qcow2 -o backing_file=/image ${IMAGE_DIR}/local_image.qcow2
+fi
 old=$(virsh net-dumpxml default | grep range|sed "s/^ *//g")
 virsh net-update default delete ip-dhcp-range "$old" --live
 virsh net-update default add ip-dhcp-range "<range start='192.168.122.100' end='192.168.122.100'/>" --live
@@ -43,13 +47,13 @@ iptables -t nat -A PREROUTING -d $ipadd -p tcp --dport 1:65535 -j DNAT --to-dest
 virt-install --hvm \
 	--connect qemu:///system \
 	--network default \
-	--name vm \
-	--ram=1024 \
-	--vcpus=1 \
+	--name ${VM_NAME:-vm} \
+	--ram=${RAM:-1024} \
+	--vcpus=${CPU:-1} \
 	--os-type=linux \
-	--os-variant=rhel7 \
-	--disk path=/local_image.qcow2 \
-	--disk /cloud_init.iso,device=cdrom \
+	--os-variant=${OS_VARIANT:-rhel7} \
+	--disk path=${IMAGE_DIR}/local_image.qcow2 \
+	--disk ${CLOUD_INIT_DISK:-/cloud_init.iso},device=cdrom \
 	--graphics none \
 	--cpu host \
 	--import
