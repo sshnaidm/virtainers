@@ -5,7 +5,7 @@ libvirtd -d
 
 if [[ -e /tmp/cloud_init.iso ]]; then
   cp /tmp/cloud_init.iso /cloud_init.iso
-elif [[ -e /tmp/user-data -a -e /tmp/meta-data ]]; then
+elif [[ -e /tmp/user-data && -e /tmp/meta-data ]]; then
   genisoimage -output /cloud_init.iso -volid cidata -joliet -rock /tmp/user-data /tmp/meta-data
 elif [[ -e /tmp/user-data ]]; then
   { echo instance-id: localimage-01; echo local-hostname: cloudimage; } > /tmp/meta-data
