@@ -15,9 +15,7 @@ ssh_authorized_keys:
 EOF
 
 docker run \
-    -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
     --privileged \
-    --cap-add SYS_ADMIN \
     -v $(realpath $IMAGE):/image \
     -v /tmp/temp-user-data:/tmp/user-data \
     --name virtainer \
