@@ -47,6 +47,7 @@ ipadd=$(ip a sh $iface | grep -Eo "inet [^ ]*" | sed "s/inet //g" | sed "s@/.*@@
 iptables -I FORWARD 1 -o virbr0 -m state -d 192.168.122.0/24 --state NEW,RELATED,ESTABLISHED -j ACCEPT
 iptables -D FORWARD 2
 iptables -t nat -A PREROUTING -d $ipadd -p tcp --dport 1:65535 -j DNAT --to-destination 192.168.122.100:1-65535
+iptables-save > /etc/sysconfig/iptables
 
 virt-install --hvm \
 	--connect qemu:///system \
@@ -61,3 +62,4 @@ virt-install --hvm \
 	--graphics none \
 	--cpu host \
 	--import
+sleep 365d
