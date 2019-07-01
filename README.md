@@ -107,16 +107,16 @@ console. (**Try not to use this option because of security risks!**)
 
 ### Tweaking and customizing virtual machine parameters
 Currently there are parameters which could be customized via environment variables:
-- RAM of virtual machine in MB - $RAM (default: 1024)
-- Virtual machine name - $VM_NAME (default: "vm")
-- Number of CPUs - $CPU (default: 1)
-- OS variant - $OS_VARIANT (default: "rhel7")
-- Internal path for diff image (see [Persistent data](#persistent-data) section) - $IMAGE_DIR (default: "/mounted")
-- Internal path for cloud-init ISO disk - $CLOUD_INIT_DISK (default: "/cloud_init.iso")
+- RAM of virtual machine in MB - ``$RAM`` (default: `1024`)
+- Virtual machine name - ``$VM_NAME`` (default: `vm`)
+- Number of CPUs - ``$CPU`` (default: `1`)
+- OS variant - ``$OS_VARIANT`` (default: `rhel7`)
+- Internal path for diff image (see [Persistent data](#persistent-data) section) - ``$IMAGE_DIR`` (default: `/mounted`)
+- Internal path for cloud-init ISO disk - ``$CLOUD_INIT_DISK`` (default: `/cloud_init.iso`)
 
 For running virtainer with 4GB RAM and 2 CPUs run as:
 ```bash
-RAM=4096 CPU=2 docker run --privileged -v ~/.ssh/id_rsa.pub:/tmp/id_rsa.pub:ro --name fedora29 -d -t docker.io/virtainers/fedora:29
+docker run -e RAM=4096 -e CPU=2 --privileged -v ~/.ssh/id_rsa.pub:/tmp/id_rsa.pub:ro --name fedora29 -d -t docker.io/virtainers/fedora:29
 ```
 
 ### Console connection
