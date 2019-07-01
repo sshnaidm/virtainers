@@ -216,12 +216,12 @@ Podman uses CNI networking and it's usually defined in ``/etc/cni/net.d``, for e
 
 ``sudo vim /etc/cni/net.d/87-podman-bridge.conflist``
 
-If we want just change default network for podman, let's replave it with new one (it will save all network options in
-podman command line). Replace ``cni0`` name of interface, which most likely already exists by ``cni1`` for example. Also
-change network range from ``"subnet": "10.89.0.0/16"`` to something different like ``"subnet": "10.99.0.0/16"``. After
-that make sure you don't run any containers in previous network: ``sudo podman rm -f -a``. Then you can delete old
-``cni0`` interface by: ``sudo ip link del cni0``. When you run podman now, the new interface ``cni1`` will be created on
-the fly and container will have address from a new IP range. Voila!
+If we want just change default network for podman, let's replace it with a new one (then we don't need to set network
+options in podman command line). Replace ``cni0`` name of interface, which most likely already exists with ``cni1`` for
+example. Also change network range from ``"subnet": "10.89.0.0/16"`` to something different like
+``"subnet": "10.99.0.0/16"``. After then make sure you don't run any containers in previous network:
+``sudo podman rm -f -a``. Then you can delete old ``cni0`` interface by: ``sudo ip link del cni0``. When you run podman
+now, the new interface ``cni1`` will be created on the fly and container will have address from a new IP range. Voila!
 
 **Using a custom network is strongly recommended while using virtainers to prevent possible clashes and networks overlaps.**
 
