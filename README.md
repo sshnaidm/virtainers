@@ -29,6 +29,7 @@ ssh fedora@$IP
     - [Persistent data](#Persistent-data)
     - [Connections between virtainers on the same host](#Connections-between-virtainers-on-the-same-host)
     - [Note for running docker inside a virtainer](#Note-for-running-docker-inside-a-virtainer)
+      - [For podman users](#For-podman-users)
   - [How to run virtainer with IP from external network](#How-to-run-virtainer-with-IP-from-external-network)
     - [Bridges and macvlan networks](#Bridges-and-macvlan-networks)
   - [Use cases](#Use-cases)
@@ -203,6 +204,24 @@ Another way to run a container with well known IP is just to set it in command l
 docker run --privileged -v ~/.ssh/id_rsa.pub:/tmp/id_rsa.pub:ro --name fefora -d -t --ip 172.28.100.10 --network=virtual docker.io/virtainers/fedora:29
 ```
 Pay attention that specifying IP address works for your custom networks only, not for default one (``172.17.0.0/16``)
+
+#### For podman users
+The same problem as docker has (see section above) exists in podman setup. Podman creates interface ``cni0`` with IP
+address ``10.88.0.1/16`` and if you run podman in virtainer which ran by podman (not confusing at all) then networks
+will overlap and connectivity will break. So we need to do the same as we did with docker above - to create on our host
+a different network for podman. How to do it?
+
+Podman uses CNI networking and it's usually defined in ``/etc/cni/net.d``, for example in file
+``/etc/cni/net.d/87-podman-bridge.conflist``. Let's edit it:
+
+``sudo vim /etc/cni/net.d/87-podman-bridge.conflist``
+
+If we want just change default network for podman, let's replave it with new one (it will save all network options in
+podman command line). Replace ``cni0`` name of interface, which most likely already exists by ``cni1`` for example. Also
+change network range from ``"subnet": "10.89.0.0/16"`` to something different like ``"subnet": "10.99.0.0/16"``. After
+that make sure you don't run any containers in previous network: ``sudo podman rm -f -a``. Then you can delete old
+``cni0`` interface by: ``sudo ip link del cni0``. When you run podman now, the new interface ``cni1`` will be created on
+the fly and container will have address from a new IP range. Voila!
 
 **Using a custom network is strongly recommended while using virtainers to prevent possible clashes and networks overlaps.**
 
