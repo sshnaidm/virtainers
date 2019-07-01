@@ -9,6 +9,7 @@ docker run --privileged -v ~/.ssh/id_rsa.pub:/tmp/id_rsa.pub:ro --name fedora29 
 IP=$(docker inspect fedora29 -f "{{ .NetworkSettings.IPAddress }}")
 docker logs fedora29 # use to see when virtual machine is up, usually about a minute
 ssh fedora@$IP
+# PROFIT! you're inside a virtual machine
 ```
 
 # Table of Contents
@@ -21,6 +22,7 @@ ssh fedora@$IP
     - [Which virtual machines are provided?](#Which-virtual-machines-are-provided)
   - [Running VM inside a container locally](#Running-VM-inside-a-container-locally)
     - [Options to inject user data](#Options-to-inject-user-data)
+    - [Tweaking and customizing virtual machine parameters](#Tweaking-and-customizing-virtual-machine-parameters)
     - [Console connection](#Console-connection)
     - [Prepared virtainers of specific distro](#Prepared-virtainers-of-specific-distro)
     - [Generic virtainer](#Generic-virtainer)
@@ -102,6 +104,20 @@ automatically using parameteres ``instance-id: localimage-01`` and ``local-hostn
 ``/tmp/cloud_init.iso`` inside the container as ``-v /path/to/my/cloud_init.iso:/tmp/cloud_init.iso``.
 5. And finally, if you don't specify anything, container will run with password ``password``, you can enter it by SSH or
 console. (**Try not to use this option because of security risks!**)
+
+### Tweaking and customizing virtual machine parameters
+Currently there are parameters which could be customized via environment variables:
+- RAM of virtual machine in MB - $RAM (default: 1024)
+- Virtual machine name - $VM_NAME (default: "vm")
+- Number of CPUs - $CPU (default: 1)
+- OS variant - $OS_VARIANT (default: "rhel7")
+- Internal path for diff image (see [Persistent data](#persistent-data) section) - $IMAGE_DIR (default: "/mounted")
+- Internal path for cloud-init ISO disk - $CLOUD_INIT_DISK (default: "/cloud_init.iso")
+
+For running virtainer with 4GB RAM and 2 CPUs run as:
+```bash
+RAM=4096 CPU=2 docker run --privileged -v ~/.ssh/id_rsa.pub:/tmp/id_rsa.pub:ro --name fedora29 -d -t docker.io/virtainers/fedora:29
+```
 
 ### Console connection
 Virtual machine is running using libvirt/KVM, so you can also enter the console:
