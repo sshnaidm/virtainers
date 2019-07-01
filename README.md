@@ -26,6 +26,7 @@ ssh fedora@$IP
     - [Generic virtainer](#Generic-virtainer)
     - [Persistent data](#Persistent-data)
     - [Connections between virtainers on the same host](#Connections-between-virtainers-on-the-same-host)
+    - [Note for running docker inside a virtainer](#Note-for-running-docker-inside-a-virtainer)
   - [How to run virtainer with IP from external network](#How-to-run-virtainer-with-IP-from-external-network)
     - [Bridges and macvlan networks](#Bridges-and-macvlan-networks)
   - [Use cases](#Use-cases)
@@ -161,6 +162,33 @@ PING 172.17.0.2 (172.17.0.2) 56(84) bytes of data.
 64 bytes from 172.17.0.2: icmp_seq=3 ttl=62 time=0.903 ms
 
 ```
+
+### Note for running docker inside a virtainer
+In case you want to run a docker inside a virtual machine of virtainer, you'll need to use a different network. The
+problem appears when docker installs its default ``docker0`` interface with ``172.17.0.1/16``. While outer network of
+virtainer is also from this subnet, if you run it by default. Packets to outer world won't go from virtual machine and
+network connectivity will break. To prevent this, if you plan to run docker inside a virtainer, create a different
+network for virtainers:
+```bash
+docker network create -d bridge --subnet=172.28.100.0/24 --ip-range=172.28.100.0/24 --gateway=172.28.100.1 virtual
+docker run --privileged --name fedora29 -d -t --network=virtual docker.io/virtainers/fedora:29
+```
+That way you don't need to care about overlapping of docker networks inside and outside of virtainer. To discover an IP
+of container just run ``docker inspect fedora29 -f "{{ .NetworkSettings.Networks.virtual.IPAddress }}"`` where
+``virtual`` is your network name from previous step.
+You also can play with IP ranges, for example if creating network like that:
+```bash
+docker network create -d bridge --subnet=172.28.100.0/24 --ip-range=172.28.100.2/32 --gateway=172.28.100.1 feels_alone
+```
+You will have only one posible IP which is 172.28.100.2, so you don't even need to inspect container for finding an IP.
+
+Another way to run a container with well known IP is just to set it in command line:
+```bash
+docker run --privileged -v ~/.ssh/id_rsa.pub:/tmp/id_rsa.pub:ro --name fefora -d -t --ip 172.28.100.10 --network=virtual docker.io/virtainers/fedora:29
+```
+Pay attention that specifying IP address works for your custom networks only, not for default one (``172.17.0.0/16``)
+
+**Using a custom network is strongly recommended while using virtainers to prevent possible clashes and networks overlaps.**
 
 ## How to run virtainer with IP from external network
 TBD
