@@ -203,7 +203,7 @@ Another way to run a container with well known IP is just to set it in command l
 ```bash
 docker run --privileged -v ~/.ssh/id_rsa.pub:/tmp/id_rsa.pub:ro --name fefora -d -t --ip 172.28.100.10 --network=virtual docker.io/virtainers/fedora:29
 ```
-Pay attention that specifying IP address works for your custom networks only, not for default one (``172.17.0.0/16``)
+Pay attention that specifying IP address works with custom networks only, not for default one (``172.17.0.0/16``)
 
 #### For podman users
 The same problem as docker has (see section above) exists in podman setup. Podman creates interface ``cni0`` with IP
