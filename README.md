@@ -3,37 +3,37 @@
 Virtual machines within containers
 ----------------------------------
 
-TL;DR - run Fedora 29 virtual machine as a container
+TL;DR - run CentOS 7 virtual machine as a container
 ```bash
-docker run --privileged -v ~/.ssh/id_rsa.pub:/tmp/id_rsa.pub:ro --name fedora29 -d -t docker.io/virtainers/fedora:29
-IP=$(docker inspect fedora29 -f "{{ .NetworkSettings.IPAddress }}")
-docker logs fedora29 # use to see when virtual machine is up, usually about a minute
-ssh fedora@$IP
+docker run --privileged -v ~/.ssh/id_rsa.pub:/tmp/id_rsa.pub:ro --name centos7 -d -t docker.io/virtainers/centos:7
+IP=$(docker inspect centos7 -f "{{ .NetworkSettings.IPAddress }}")
+docker logs centos7 # use to see when virtual machine is up, usually about a minute
+ssh centos@$IP
 # PROFIT! you're inside a virtual machine
 ```
 
 # Table of Contents
-- [Virtainers](#Virtainers)
-  - [Virtual machines within containers](#Virtual-machines-within-containers)
-- [Table of Contents](#Table-of-Contents)
-  - [Intro to virtainers](#Intro-to-virtainers)
-    - [Why and how](#Why-and-how)
-    - [Which containers engines are supported - docker and podman](#Which-containers-engines-are-supported---docker-and-podman)
-    - [Which virtual machines are provided?](#Which-virtual-machines-are-provided)
-  - [Running VM inside a container locally](#Running-VM-inside-a-container-locally)
-    - [Options to inject user data](#Options-to-inject-user-data)
-    - [Tweaking and customizing virtual machine parameters](#Tweaking-and-customizing-virtual-machine-parameters)
-    - [Console connection](#Console-connection)
-    - [Prepared virtainers of specific distro](#Prepared-virtainers-of-specific-distro)
-    - [Generic virtainer](#Generic-virtainer)
-    - [Persistent data](#Persistent-data)
-    - [Connections between virtainers on the same host](#Connections-between-virtainers-on-the-same-host)
-    - [Note for running docker inside a virtainer](#Note-for-running-docker-inside-a-virtainer)
-      - [For podman users](#For-podman-users)
-  - [How to run virtainer with IP from external network](#How-to-run-virtainer-with-IP-from-external-network)
-    - [Bridges and macvlan networks](#Bridges-and-macvlan-networks)
-  - [Use cases](#Use-cases)
-  - [What's next?](#Whats-next)
+- [Virtainers](#virtainers)
+  - [Virtual machines within containers](#virtual-machines-within-containers)
+- [Table of Contents](#table-of-contents)
+  - [Intro to virtainers](#intro-to-virtainers)
+    - [Why and how](#why-and-how)
+    - [Which containers engines are supported - docker and podman](#which-containers-engines-are-supported---docker-and-podman)
+    - [Which virtual machines are provided?](#which-virtual-machines-are-provided)
+  - [Running VM inside a container locally](#running-vm-inside-a-container-locally)
+    - [Options to inject user data](#options-to-inject-user-data)
+    - [Tweaking and customizing virtual machine parameters](#tweaking-and-customizing-virtual-machine-parameters)
+    - [Console connection](#console-connection)
+    - [Prepared virtainers of specific distro](#prepared-virtainers-of-specific-distro)
+    - [Generic virtainer](#generic-virtainer)
+    - [Persistent data](#persistent-data)
+    - [Connections between virtainers on the same host](#connections-between-virtainers-on-the-same-host)
+    - [Note for running docker inside a virtainer](#note-for-running-docker-inside-a-virtainer)
+      - [For podman users](#for-podman-users)
+  - [How to run virtainer with IP from external network](#how-to-run-virtainer-with-ip-from-external-network)
+    - [Bridges and macvlan networks](#bridges-and-macvlan-networks)
+  - [Use cases](#use-cases)
+  - [What's next?](#whats-next)
 
 
 ## Intro to virtainers
@@ -226,7 +226,64 @@ now, the new interface ``cni1`` will be created on the fly and container will ha
 **Using a custom network is strongly recommended while using virtainers to prevent possible clashes and networks overlaps.**
 
 ## How to run virtainer with IP from external network
-TBD
+Straight through approach will be creating a container network with IP range of external network, then running a
+container with assigning IP of this network. The only danger here is overlapping with main network and using same IP for
+multiple hosts. Better to use a narrower prefix for IP subnet of container network and limit DHCP range of main network
+to avoid an overlapping.
+For example your have `192.168.2.0/24` external DHCP network and you excluded addresses higher than `192.168.2.200` from
+DHCP. Then let's create a subnet `/27`:
+```bash
+docker network create --ip-range 192.168.2.224/27 --attachable --gateway 192.168.2.225 --subnet 192.168.2.224/27 externalnet
+```
+You'll get bridge interface on your host `192.168.2.225` which will be a gateway for virtainers from `192.168.2.224/27`
+network.
+```bash
+$ ip a | grep 192.168.2.
+inet 192.168.2.160/24 brd 192.168.2.255 scope global dynamic noprefixroute eth0
+inet 192.168.2.225/27 scope global br-315eaa8b9537
+```
+Now we can run a virtainer in this network:
+```bash
+docker run -d -t --name netcontainer --privileged -v ~/.ssh/id_rsa.pub:/tmp/id_rsa.pub:ro --network externalnet docker.io/virtainers/fedora:30
+```
+Inside a container we'll have IP address from our range `192.168.2.224/27`:
+```bash
+/ $ ip add
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000
+    ...
+150: eth0@if151: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP
+    link/ether 02:42:c0:a8:02:e2 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.2.226/27 scope global eth0
+    ...
+```
+Let's see route table and traceroute:
+```bash
+/ $ ip route
+default via 192.168.2.225 dev eth0
+192.168.2.224/27 dev eth0 scope link  src 192.168.2.226
+/ $ traceroute google.com
+traceroute to google.com (172.217.169.14), 30 hops max, 46 byte packets
+ 1  192.168.2.225 (192.168.2.225)  0.019 ms  0.008 ms  0.005 ms
+ 2  192.168.2.1 (192.168.2.1)  0.289 ms  0.350 ms  0.332 ms
+ 3  126-120-87-11 (126.120.87.11)  0.776 ms  0.660 ms  0.556 ms
+...
+```
+So we can see that packet from container goes to host interface `192.168.2.225`, then to network
+gateway that is defined on the host machine `192.168.2.1` and continues its way to the destination.
+We also can connect to containers IP `192.168.2.226` from any server in the `192.168.2.0/24` network. If you can't, try to add a route:
+```bash
+sudo ip route add 192.168.2.226 via 192.168.2.225
+```
+or for whole subnet:
+```bash
+sudo ip route add 192.168.2.224/27 via 192.168.2.225
+```
+Make sure your firewall on the host allows connection,
+The most important to know here is that now your containers VM is opened to external network, please
+take into account possible security issues. This is recommended only for test environments
+with internal non-routable IP ranges.
+
+
 
 ### Bridges and macvlan networks
 TBD
