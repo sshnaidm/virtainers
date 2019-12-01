@@ -270,7 +270,8 @@ traceroute to google.com (172.217.169.14), 30 hops max, 46 byte packets
 ```
 So we can see that packet from container goes to host interface `192.168.2.225`, then to network
 gateway that is defined on the host machine `192.168.2.1` and continues its way to the destination.
-We also can connect to containers IP `192.168.2.226` from any server in the `192.168.2.0/24` network. If you can't, try to add a route:
+We also can connect to containers IP `192.168.2.226` from any server in the `192.168.2.0/24` network.
+If you can't, try to add a route:
 ```bash
 sudo ip route add 192.168.2.226 via 192.168.2.225
 ```
@@ -278,15 +279,29 @@ or for whole subnet:
 ```bash
 sudo ip route add 192.168.2.224/27 via 192.168.2.225
 ```
-Make sure your firewall on the host allows connection,
+Make sure your firewall on the host allows connection. Possibly you'll need to set your interface on the host to
+promiscuous mode:
+```bash
+ip link set eth0 promisc on
+```
 The most important to know here is that now your containers VM is opened to external network, please
 take into account possible security issues. This is recommended only for test environments
 with internal non-routable IP ranges.
 
 
-
 ### Bridges and macvlan networks
-TBD
+Another option will be defining [macvlan networks](https://docs.docker.com/network/macvlan/#create-a-macvlan-network).
+```bash
+docker network create -d macvlan --subnet=192.168.2.0/24  --gateway=192.168.2.1 --ip-range=192.168.2.224/27 -o parent=eth0 macvlan_external
+```
+Although we defined an existing subnet, we limited ip range to narrow subnet `192.168.2.224/27`. Now we can start virtainers
+as usual:
+```bash
+docker run -d -t --privileged --name netcontainer --network macvlan_external docker.io/virtainers/centos:7
+```
+It's possible that you still need to enable promiscuous mode in the interface. Also it's not possible to connect to container
+from the same host. But you can connect from other hosts on the network or for example assign an additional IP on the interface
+and connect from it.
 
 ## Use cases
 1. Installation of virtual machine with virtainer won't require anything to be installed on the host, except docker or
@@ -300,7 +315,7 @@ Tell us about another ideas and use cases it can be helpful for you.
 ## What's next?
 What is the roadmap:
 1. Create Linux containers with X window, running VNC on startup.
-2. Create a python script that will manage all command options.
+2. Create a nice python script that will manage all command options.
 3. Create an API.
-4. Create a CNI networking scripts for podman networking.
+4. Create by default networks of docker or podman for virtainers.
 ...
