@@ -1,0 +1,12 @@
+FROM alpine:3.9
+
+# URL for XZ compressed image
+ARG image_url=https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.1.1911-20200113.3.x86_64.qcow2
+RUN apk update &&\
+	apk add --no-cache cdrkit alpine-conf qemu-system-x86_64 libvirt libvirt-daemon dbus polkit qemu-img openrc virt-install xz openssh bash xz py-libxml2 py-libvirt &&\
+	rc-update add libvirtd &&\
+	rc-update add dbus
+RUN wget $image_url -O - | xz -f -T 0 > /image.xz
+
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
