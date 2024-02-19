@@ -1,4 +1,10 @@
 #!/bin/sh
+
+# hack for libvirtd
+echo 'user = "root"' >> /etc/libvirt/qemu.conf
+echo 'group = "root"' >> /etc/libvirt/qemu.conf
+echo 'remember_owner = 0' >> /etc/libvirt/qemu.conf
+
 dbus-daemon --system --print-address
 virtlogd -d
 libvirtd -d
@@ -42,7 +48,7 @@ IMAGE_DIR=${IMAGE_DIR:-/mounted}
 mkdir -p $IMAGE_DIR
 if [[ ! -e ${IMAGE_DIR}/local_image.qcow2 ]]; then
   echo "+++++++++++ Creating a disk ${IMAGE_DIR}/local_image.qcow2 for virtual machine..."
-  qemu-img create -f qcow2 -o backing_file=/image ${IMAGE_DIR}/local_image.qcow2 ${DISK_SIZE:-40G}
+  qemu-img create -f qcow2 -o backing_file=/image ${IMAGE_DIR}/local_image.qcow2 ${DISK_SIZE:-40}G
 else
   echo "+++++++++++ Using existing disk in ${IMAGE_DIR}/local_image.qcow2 for virtual machine"
 fi
@@ -87,8 +93,8 @@ virt-install --hvm \
 	--ram=${RAM:-1024} \
 	--vcpus=${CPU:-1} \
 	--os-type=linux \
-	--os-variant=${OS_VARIANT:-rhel7} \
-	--disk path=${IMAGE_DIR}/local_image.qcow2 \
+	--os-variant=${OS_VARIANT:-rhel7.6} \
+	--disk path=${IMAGE_DIR}/local_image.qcow2,size=${DISK_SIZE:-40} \
 	--disk ${CLOUD_INIT_DISK:-/cloud_init.iso},device=cdrom \
 	--graphics none \
 	--cpu host \
